@@ -28,3 +28,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Tailwind v4 uses CSS-first configuration in `app/globals.css` instead of `tailwind.config.ts`
 - ESLint config is flat config format (ESLint 9)
 - No pre-commit hooks configured
+
+## Agent Role Rules (MANDATORY)
+
+Each agent has a strictly defined role. **Never cross role boundaries.**
