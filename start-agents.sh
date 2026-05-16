@@ -27,7 +27,7 @@ for i in 0 1 2 3; do
   tmux send-keys -t $SESSION:0.$i "opencode" Enter
 done
 
-# opencode の起動を待つ
+# opencode の起動を待つ.(必要に応じて調整)
 sleep 10
 
 # 各エージェントに自分のロールを認識させる
