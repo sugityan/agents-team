@@ -1,63 +1,137 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+
+interface Todo {
+  id: number;
+  text: string;
+  completed: boolean;
+}
+
+type Filter = "all" | "active" | "completed";
+
+function loadTodos(): Todo[] {
+  if (typeof window === "undefined") return [];
+  const saved = localStorage.getItem("todos");
+  return saved ? JSON.parse(saved) : [];
+}
 
 export default function Home() {
+  const [todos, setTodos] = useState<Todo[]>(loadTodos);
+  const [input, setInput] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
+
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
+
+  const addTodo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setTodos([...todos, { id: Date.now(), text: input.trim(), completed: false }]);
+    setInput("");
+  };
+
+  const deleteTodo = (id: number) => {
+    setTodos(todos.filter((todo) => todo.id !== id));
+  };
+
+  const toggleTodo = (id: number) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    );
+  };
+
+  const filteredTodos = todos.filter((todo) => {
+    if (filter === "active") return !todo.completed;
+    if (filter === "completed") return todo.completed;
+    return true;
+  });
+
+  const activeCount = todos.filter((t) => !t.completed).length;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black px-4 py-8">
+      <main className="w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+          TODO App
+        </h1>
+
+        <form onSubmit={addTodo} className="flex gap-2 mb-6">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="What needs to be done?"
+            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Add
+          </button>
+        </form>
+
+        <ul className="space-y-2 mb-4">
+          {filteredTodos.map((todo) => (
+            <li
+              key={todo.id}
+              className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-md"
+            >
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={() => toggleTodo(todo.id)}
+                className="w-5 h-5 cursor-pointer"
+              />
+              <span
+                className={`flex-1 ${
+                  todo.completed
+                    ? "line-through text-gray-500"
+                    : "text-gray-800 dark:text-gray-100"
+                }`}
+              >
+                {todo.text}
+              </span>
+              <button
+                onClick={() => deleteTodo(todo.id)}
+                className="px-2 py-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded text-sm"
+              >
+                Delete
+              </button>
+            </li>
+          ))}
+          {filteredTodos.length === 0 && (
+            <li className="text-center text-gray-500 py-4">
+              {todos.length === 0
+                ? "No todos yet. Add one above!"
+                : "No todos match this filter."}
+            </li>
+          )}
+        </ul>
+
+        <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {activeCount} item{activeCount !== 1 ? "s" : ""} left
+          </span>
+          <div className="flex gap-1">
+            {(["all", "active", "completed"] as Filter[]).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1 text-sm rounded ${
+                  filter === f
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                }`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       </main>
     </div>
